@@ -14,6 +14,7 @@ rq.init()
 
 
 # 参数
+hold_length = 10
 inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/数据/"
 outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果/"
 
@@ -44,10 +45,11 @@ estimate_infoPublDate.index = id_convert(estimate_infoPublDate.index.tolist())
 
 
 # 股票选择、买入及卖出时间
-quarterly_index = foreshow_cum_netProfitMin.columns[foreshow_cum_netProfitMin.columns >= "2009-06-30"].tolist()
+quarterly_index = foreshow_cum_netProfitMin.columns[foreshow_cum_netProfitMin.columns >= "2010-03-31"].tolist()
 df_code = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
 df_buy_date = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
 df_sell_date = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
+df_join = pd.DataFrame(columns=['code', 'buy_date', 'sell_date'])
 
 for quarterly_adjust in quarterly_index:
     ind = (foreshow_cum_netProfitMin.columns.tolist()).index(quarterly_adjust)
@@ -101,7 +103,7 @@ for quarterly_adjust in quarterly_index:
         ind_foreshow_infoPublDate = get_previous_trading_date(df_infoPublDate.loc[code, 'foreshow_infoPublDate'])
         ind_foreshow_infoPublDate = get_next_trading_date(ind_foreshow_infoPublDate).strftime("%Y-%m-%d")
         pre_estimate_infoPublDate = get_previous_trading_date(
-            df_infoPublDate.loc[code, 'estimate_infoPublDate'], n=10).strftime("%Y-%m-%d")
+            df_infoPublDate.loc[code, 'estimate_infoPublDate'], n=hold_length).strftime("%Y-%m-%d")
         df_infoPublDate.loc[code, 'buy_date'] = max(ind_foreshow_infoPublDate, pre_estimate_infoPublDate)
 
     df_code.iloc[:len(df_infoPublDate), quarterly_index.index(quarterly_adjust)] = df_infoPublDate.index
@@ -110,11 +112,21 @@ for quarterly_adjust in quarterly_index:
     df_sell_date.iloc[:len(df_infoPublDate), quarterly_index.index(quarterly_adjust)] = \
         df_infoPublDate.loc[:, 'realized_infoPublDate'].values
 
+    df_sample = df_infoPublDate[['buy_date', 'realized_infoPublDate']]
+    df_sample.reset_index(inplace=True)
+    df_sample = df_sample.rename(columns={'index': 'code', 'realized_infoPublDate': 'sell_date'})
+    df_sample = df_sample.sort_values(by='buy_date')
+
+    df_join = pd.concat([df_join, df_sample])
+
     print(quarterly_adjust)
+
+df_join.reset_index(inplace=True, drop=True)
 
 # 数据导出
 df_code.to_csv(outputPath + "季度股票池.csv")
 df_buy_date.to_csv(outputPath + "季度个股买入时点.csv")
 df_sell_date.to_csv(outputPath + "季度个股卖出时点.csv")
+df_join.to_csv(outputPath + "汇总个股买卖时点.csv")
 
 # ######################################################################################################################
