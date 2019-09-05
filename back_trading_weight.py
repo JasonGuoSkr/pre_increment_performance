@@ -1,7 +1,7 @@
 
 # ######################################################################################################################
 """
-绩效回测
+绩效回测，个股持仓上限为5%，每日调仓，使股票间等权重
 """
 
 import pandas as pd
@@ -19,9 +19,9 @@ outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果/"
 
 
 # 数据导入
-df_code = pd.read_csv(inputPath + "季度股票池.csv", index_col=0, engine='python')
-df_buy_date = pd.read_csv(inputPath + "季度个股买入时点.csv", index_col=0, engine='python')
-df_sell_date = pd.read_csv(inputPath + "季度个股卖出时点.csv", index_col=0, engine='python')
+# df_code = pd.read_csv(inputPath + "季度股票池.csv", index_col=0, engine='python')
+# df_buy_date = pd.read_csv(inputPath + "季度个股买入时点.csv", index_col=0, engine='python')
+# df_sell_date = pd.read_csv(inputPath + "季度个股卖出时点.csv", index_col=0, engine='python')
 df_buy_sell = pd.read_csv(inputPath + "汇总个股买卖时点.csv", index_col=0, engine='python')
 
 df_buy_sell.sort_values(by='buy_date', axis=0, ascending=True, inplace=True)
@@ -65,7 +65,7 @@ for date in list_trading:
 
 # 收益率计算
 ratio_df = pd.DataFrame(index=list_trading[1:-1], columns=['daily_ratio', 'index_ratio', 'turn_ratio',
-                                                            'holding_num', 'buy_num', 'sell_num'])
+                                                           'holding_num', 'buy_num', 'sell_num'])
 for date in list_trading[1:-1]:
     date_str = date.strftime("%Y-%m-%d")
     date_pre = list_trading[list_trading.index(date) - 1]
