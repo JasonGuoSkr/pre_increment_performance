@@ -15,9 +15,9 @@ rq.init()
 
 
 # 参数
-hold_length = 10
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191201/数据/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191201/结果/"
+hold_length = 5
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果/"
 if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')
@@ -132,9 +132,9 @@ df_join.dropna(how='any', inplace=True)
 df_join.reset_index(inplace=True, drop=True)
 
 # 数据导出
-df_code.to_csv(outputPath + str(hold_length) + "_季度股票池.csv")
-df_buy_date.to_csv(outputPath + str(hold_length) + "_季度个股买入时点.csv")
-df_sell_date.to_csv(outputPath + str(hold_length) + "_季度个股卖出时点.csv")
-df_join.to_csv(outputPath + str(hold_length) + "_汇总个股买卖时点.csv")
+df_code.to_csv(outputPath + "季度股票池.csv")
+df_buy_date.to_csv(outputPath + "季度个股买入时点.csv")
+df_sell_date.to_csv(outputPath + "季度个股卖出时点.csv")
+df_join.to_csv(outputPath + "汇总个股买卖时点.csv")
 
 # ######################################################################################################################

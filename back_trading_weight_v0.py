@@ -1,7 +1,9 @@
 
 # ######################################################################################################################
 """
-绩效回测，个股持仓上限为5%，每日调仓，使股票间等权重
+绩效回测V0:
+    仅根据权重计算个股及组合收益，对冲净值为每日超额收益的累计
+    个股持仓上限为5%，每日调仓，使股票间等权重
 """
 
 import pandas as pd
@@ -14,25 +16,58 @@ rq.init()
 
 
 # 参数
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191106/结果/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191106/权重调整/"
 
 
 # 数据导入
-# df_code = pd.read_csv(inputPath + "季度股票池.csv", index_col=0, engine='python')
-# df_buy_date = pd.read_csv(inputPath + "季度个股买入时点.csv", index_col=0, engine='python')
-# df_sell_date = pd.read_csv(inputPath + "季度个股卖出时点.csv", index_col=0, engine='python')
 df_buy_sell = pd.read_csv(inputPath + "汇总个股买卖时点.csv", index_col=0, engine='python')
-
 df_buy_sell.sort_values(by='buy_date', axis=0, ascending=True, inplace=True)
+df_buy_sell = df_buy_sell.reset_index(drop=True)
+
+# 剔除停牌及建仓日涨跌停个股
+list_suspended_index = pd.DataFrame(index=df_buy_sell.index, columns=['index'])
+list_limit_index = pd.DataFrame(index=df_buy_sell.index, columns=['index'])
+
+stocks_price = rq.get_price(df_buy_sell['code'].unique(), start_date=df_buy_sell.iloc[0, 1],
+                            end_date=df_buy_sell.iloc[-1, 1], frequency='1d',
+                            fields=['open', 'limit_up', 'limit_down', 'volume'], adjust_type='pre',
+                            skip_suspended=False, market='cn')
+
+stocks_open = stocks_price.open
+stocks_up = stocks_price.limit_up
+stocks_down = stocks_price.limit_down
+stocks_volume = stocks_price.volume
+
+for ind in df_buy_sell.index:
+    ind_code = df_buy_sell.loc[ind, 'code']
+    ind_date = df_buy_sell.loc[ind, 'buy_date']
+
+    if stocks_open.loc[ind_date, ind_code] is not np.nan:
+        if stocks_open.loc[ind_date, ind_code] == stocks_up.loc[ind_date, ind_code] or \
+                stocks_open.loc[ind_date, ind_code] == stocks_down.loc[ind_date, ind_code]:
+            list_limit_index.loc[ind, 'index'] = True
+        else:
+            list_limit_index.loc[ind, 'index'] = False
+        if stocks_volume.loc[ind_date, ind_code] == 0:
+            list_suspended_index.loc[ind, 'index'] = True
+        else:
+            list_suspended_index.loc[ind, 'index'] = False
+    else:
+        list_limit_index.loc[ind, 'index'] = True
+        list_suspended_index.loc[ind, 'index'] = True
+
+list_filter_index = list_suspended_index | list_limit_index
+stocks_list = list_filter_index[list_filter_index.values == False].index.tolist()
+df_buy_sell = df_buy_sell.loc[stocks_list]
 
 # 参数
 start_date = '2010-01-01'
-end_date = '2019-06-30'
+end_date = '2019-10-31'
 
 weight_bound = 0.1
 tax_cost = 0.001
-tran_cost = 0.001
+tran_cost = 0.0015
 index_code = '000905.XSHG'
 
 # 交易日列表
@@ -106,6 +141,12 @@ equity_df = pd.DataFrame(index=list_trading[1:-1], columns=['daily_equity', 'ind
 equity_df.loc[:, 'daily_equity'] = (ratio_df.loc[:, 'daily_ratio'] + 1).cumprod()
 equity_df.loc[:, 'index_equity'] = (ratio_df.loc[:, 'index_ratio'] + 1).cumprod()
 equity_df.loc[:, 'excess_equity'] = (ratio_df.loc[:, 'daily_ratio'] - ratio_df.loc[:, 'index_ratio'] + 1).cumprod()
+
+# 日收益与股票数量关系
+corr_df = pd.DataFrame({'excess_rate': ratio_df.loc[:, 'daily_ratio'] - ratio_df.loc[:, 'index_ratio'],
+                        'hold_num': ratio_df.loc[:, 'holding_num']})
+corr_df = corr_df[corr_df['hold_num'] != 0]
+corr_df.astype(float).corr()
 
 # 数据导出
 ratio_df.to_csv(outputPath + "策略收益率换手率.csv")

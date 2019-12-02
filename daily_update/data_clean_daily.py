@@ -15,8 +15,8 @@ rq.init()
 
 
 # 参数
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191101/数据/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191101/数据/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整/数据/"
 
 
 # 数据导入
@@ -27,7 +27,6 @@ foreshow_cum_netProfitMin = foreshow_cum_netProfitMin.replace(0, np.nan)
 foreshow_cum_netProfit_changeMin = foreshow_cum_netProfit_changeMin.replace(0, np.nan)
 foreshow_cum_netProfit_changeMin = foreshow_cum_netProfit_changeMin.div(100)
 
-# realized_infoPublDate = pd.read_csv(inputPath + "季度报告披露时间_聚源.csv", index_col=0, engine='python')
 realized_infoPublDate = pd.read_csv(inputPath + "季度报告披露时间_wind.csv", index_col=0, engine='python')
 realized_cum_netProfit = pd.read_csv(inputPath + "财务报告累计净利润_聚源.csv", index_col=0, engine='python')
 realized_infoPublDate = realized_infoPublDate.reindex(foreshow_infoPublDate.index)

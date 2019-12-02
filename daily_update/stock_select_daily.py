@@ -16,8 +16,8 @@ rq.init()
 
 # 参数
 hold_length = 10
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191201/数据/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191201/结果/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整/结果/"
 if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')
@@ -49,7 +49,7 @@ estimate_infoPublDate.index = id_convert(estimate_infoPublDate.index.tolist())
 
 
 # 股票选择、买入及卖出时间
-quarterly_index = foreshow_cum_netProfitMin.columns[foreshow_cum_netProfitMin.columns >= "2010-06-30"].tolist()
+quarterly_index = foreshow_cum_netProfitMin.columns[foreshow_cum_netProfitMin.columns >= "2019-09-30"].tolist()
 df_code = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
 df_buy_date = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
 df_sell_date = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
@@ -59,7 +59,7 @@ for quarterly_adjust in quarterly_index:
     ind = (foreshow_cum_netProfitMin.columns.tolist()).index(quarterly_adjust)
     quarterly_yoy = foreshow_cum_netProfitMin.columns[ind - 4]
 
-    # 计算相关净利润与营收数据
+    # 计算相关净利润数据
     list_netProfit_cum = foreshow_cum_netProfitMin[quarterly_adjust]
     list_netProfit_cum_yoy = realized_cum_netProfit[quarterly_yoy]
 
@@ -91,13 +91,14 @@ for quarterly_adjust in quarterly_index:
     df_infoPublDate = pd.DataFrame({'foreshow_infoPublDate': list_foreshow_infoPublDate,
                                     'realized_infoPublDate': list_realized_infoPublDate,
                                     'estimate_infoPublDate': list_estimate_infoPublDate})
-    df_infoPublDate = df_infoPublDate.dropna(axis=0, how='any')
+    # df_infoPublDate = df_infoPublDate.dropna(axis=0, how='any')
 
     for code in df_infoPublDate.index:
-        ind_realized_infoPublDate = get_previous_trading_date(df_infoPublDate.loc[code, 'realized_infoPublDate'])
-        ind_realized_infoPublDate = get_next_trading_date(ind_realized_infoPublDate).strftime("%Y-%m-%d")
+        if type(df_infoPublDate.loc[code, 'realized_infoPublDate']) is str:
+            ind_realized_infoPublDate = get_previous_trading_date(df_infoPublDate.loc[code, 'realized_infoPublDate'])
+            ind_realized_infoPublDate = get_next_trading_date(ind_realized_infoPublDate).strftime("%Y-%m-%d")
 
-        df_infoPublDate.loc[code, 'realized_infoPublDate'] = ind_realized_infoPublDate
+            df_infoPublDate.loc[code, 'realized_infoPublDate'] = ind_realized_infoPublDate
 
     for code in df_infoPublDate.index:
         ind_foreshow_infoPublDate = get_previous_trading_date(df_infoPublDate.loc[code, 'foreshow_infoPublDate'])
@@ -105,12 +106,15 @@ for quarterly_adjust in quarterly_index:
         pre_estimate_infoPublDate = get_previous_trading_date(
             df_infoPublDate.loc[code, 'estimate_infoPublDate'], n=hold_length).strftime("%Y-%m-%d")
 
-        if max(ind_foreshow_infoPublDate, pre_estimate_infoPublDate) < df_infoPublDate.loc[code, 'realized_infoPublDate']:
-            df_infoPublDate.loc[code, 'buy_date'] = max(ind_foreshow_infoPublDate, pre_estimate_infoPublDate)
+        if type(df_infoPublDate.loc[code, 'realized_infoPublDate']) is str:
+            if max(ind_foreshow_infoPublDate, pre_estimate_infoPublDate) < df_infoPublDate.loc[code, 'realized_infoPublDate']:
+                df_infoPublDate.loc[code, 'buy_date'] = max(ind_foreshow_infoPublDate, pre_estimate_infoPublDate)
+            else:
+                df_infoPublDate.loc[code, 'buy_date'] = np.nan
         else:
-            df_infoPublDate.loc[code, 'buy_date'] = np.nan
+            df_infoPublDate.loc[code, 'buy_date'] = max(ind_foreshow_infoPublDate, pre_estimate_infoPublDate)
 
-    df_infoPublDate = df_infoPublDate.dropna(axis=0, how='any')
+    # df_infoPublDate = df_infoPublDate.dropna(axis=0, how='any')
 
     df_code.iloc[:len(df_infoPublDate), quarterly_index.index(quarterly_adjust)] = df_infoPublDate.index
     df_buy_date.iloc[:len(df_infoPublDate), quarterly_index.index(quarterly_adjust)] = \
@@ -127,14 +131,14 @@ for quarterly_adjust in quarterly_index:
 
     print(quarterly_adjust)
 
-df_join[(df_join['code'] == '000048.XSHE') & (df_join['sell_date'] == '2018-08-31')] = np.nan
-df_join.dropna(how='any', inplace=True)
+# df_join[(df_join['code'] == '000048.XSHE') & (df_join['sell_date'] == '2018-08-31')] = np.nan
+# df_join.dropna(how='any', inplace=True)
 df_join.reset_index(inplace=True, drop=True)
 
 # 数据导出
-df_code.to_csv(outputPath + str(hold_length) + "_季度股票池.csv")
-df_buy_date.to_csv(outputPath + str(hold_length) + "_季度个股买入时点.csv")
-df_sell_date.to_csv(outputPath + str(hold_length) + "_季度个股卖出时点.csv")
-df_join.to_csv(outputPath + str(hold_length) + "_汇总个股买卖时点.csv")
+# df_code.to_csv(outputPath + "季度股票池.csv")
+# df_buy_date.to_csv(outputPath + "季度个股买入时点.csv")
+# df_sell_date.to_csv(outputPath + "季度个股卖出时点.csv")
+df_join.to_csv(outputPath + "汇总个股买卖时点.csv")
 
 # ######################################################################################################################
