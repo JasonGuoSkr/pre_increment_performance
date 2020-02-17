@@ -1,9 +1,11 @@
 
 # ######################################################################################################################
 """
-绩效回测V1:
-    根据真实持股数量计算组合及指数收益率，组合及指数买入权重一致，持股组合无变化时不调仓
-    个股持仓上限为5%，每日调仓，使股票间等权重
+绩效回测V2:
+    弃用********************************************************
+    根据真实持股数量计算组合及指数收益率，组合及指数买入权重一致，
+    持仓个股一经买入，权重不再变化
+    个股持仓上限为5%
 """
 
 import os
@@ -18,8 +20,8 @@ rq.init()
 
 
 # 参数
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191203/结果/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191203/权重调整/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191202/结果/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191202/权重调整_v2/"
 if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')
@@ -38,7 +40,6 @@ index_multiplier = 200
 
 # 数据导入
 df_buy_sell = pd.read_csv(inputPath + str(hold_length) + "_汇总个股买卖时点.csv", index_col=0, engine='python')
-df_buy_sell.drop_duplicates(inplace=True)
 df_buy_sell.sort_values(by='buy_date', axis=0, ascending=True, inplace=True)
 df_buy_sell = df_buy_sell.reset_index(drop=True)
 
@@ -112,6 +113,7 @@ price_index = rq.get_price(index_code, start_date=start_date, end_date=end_date,
 # 日收益计算
 holding_pre = []
 equity_pre = 0
+cash_pre = 0
 index_equity_pre = 0
 volume_pre = pd.Series(data=np.zeros(len(list_code)), index=list_code)
 index_volume_pre = 0
@@ -120,8 +122,8 @@ ratio_df = pd.DataFrame(index=list_calendar[1:-1], columns=['daily_profit', 'ind
                                                             'daily_ratio', 'index_ratio', 'holding_num',
                                                             'buy_num', 'sell_num', 'index_num'])
 
-for date in list_calendar[1:-1]:
-    # date = list_calendar[189]
+for date in list_calendar[1:654]:
+    # date = list_calendar[654]
     date_pre = list_calendar[list_calendar.index(date) - 1]
     date_date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
 
@@ -139,18 +141,22 @@ for date in list_calendar[1:-1]:
                 volume_daily = volume_pre
                 index_volume_daily = index_volume_pre
             else:
+                code_unchange = list(set(holding_code).difference(set(code_buy)))
+
                 weight_daily = pd.Series(data=np.zeros(len(list_code)), index=list_code)
 
-                if len(holding_code) > (1 / weight_bound):
-                    weight_daily.loc[holding_code] = 1 / len(holding_code)
-                elif len(holding_code) > 0:
-                    weight_daily.loc[holding_code] = weight_bound
+                if len(code_buy) > (1 / weight_bound):
+                    weight_daily.loc[code_buy] = 1 / len(code_buy)
+                elif len(code_buy) > 0:
+                    weight_daily.loc[code_buy] = weight_bound
 
-                volume_daily = np.tile(equity_pre, (len(list_code))) * weight_daily / df_close.loc[date_date_pre]
+                volume_daily = pd.Series(data=np.zeros(len(list_code)), index=list_code)
+                volume_daily.loc[code_unchange] = volume_pre.loc[code_unchange]
+                volume_daily.loc[code_buy] = np.tile(cash_pre, (len(list_code))) * weight_daily / \
+                    df_close.loc[date_date_pre]
                 volume_daily.fillna(0, inplace=True)
                 volume_daily = np.floor(volume_daily / 100) * 100
 
-                # index_volume_daily = index_equity_pre * np.sum(weight_daily) / price_index.loc[date_date_pre, 'close']
                 index_volume_daily = np.nansum(volume_daily * df_open.loc[date_date]) / \
                     price_index.loc[date_date_pre, 'close']
                 index_volume_daily = np.floor(index_volume_daily / index_multiplier)
@@ -171,6 +177,8 @@ for date in list_calendar[1:-1]:
             daily_ratio = daily_profit / equity_pre
             daily_use = initial_amount
             equity_pre = equity_pre + daily_profit
+            cash_pre = cash_pre - np.nansum(volume_buy * df_open.loc[date_date]) - \
+                np.nansum(volume_sell * df_open.loc[date_date]) - cost_buy - cost_sell
 
             # 指数计算
             index_volume_diff = index_volume_daily - index_volume_pre
@@ -185,13 +193,14 @@ for date in list_calendar[1:-1]:
         elif len(holding_code) and not len(holding_pre):
             # 股票组合计算
             equity_pre = initial_amount
+            cash_pre = initial_amount
 
             weight_daily = pd.Series(data=np.zeros(len(list_code)), index=list_code)
 
-            if len(holding_code) > (1 / weight_bound):
-                weight_daily.loc[holding_code] = 1 / len(holding_code)
-            elif len(holding_code) > 0:
-                weight_daily.loc[holding_code] = weight_bound
+            if len(code_buy) > (1 / weight_bound):
+                weight_daily.loc[code_buy] = 1 / len(code_buy)
+            elif len(code_buy) > 0:
+                weight_daily.loc[code_buy] = weight_bound
 
             volume_daily = np.tile(equity_pre, (len(list_code))) * weight_daily / df_close.loc[date_date_pre]
             volume_daily.fillna(0, inplace=True)
@@ -206,6 +215,7 @@ for date in list_calendar[1:-1]:
             daily_ratio = daily_profit / equity_pre
             daily_use = initial_amount
             equity_pre = equity_pre + daily_profit
+            cash_pre = cash_pre - np.nansum(volume_buy * df_open.loc[date_date]) - cost_buy
 
             # 指数计算
             index_equity_pre = initial_amount
@@ -233,6 +243,7 @@ for date in list_calendar[1:-1]:
             daily_ratio = daily_profit / equity_pre
             daily_use = initial_amount
             equity_pre = 0
+            cash_pre = 0
 
             # 指数计算
             index_volume_daily = 0
@@ -254,6 +265,7 @@ for date in list_calendar[1:-1]:
             daily_ratio = 0
             daily_use = 0
             equity_pre = 0
+            cash_pre = 0
 
             # 指数计算
             index_volume_daily = 0
@@ -296,6 +308,8 @@ for date in list_calendar[1:-1]:
     ratio_df.loc[date, 'sell_num'] = (volume_diff < 0).sum()
     ratio_df.loc[date, 'index_num'] = index_volume_daily
 
+    if cash_pre < 0:
+        break
 
 # 权益计算
 equity_df = pd.DataFrame(index=list_calendar[1:-1], columns=['daily_equity', 'index_equity', 'excess_equity',

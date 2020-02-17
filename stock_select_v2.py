@@ -1,8 +1,9 @@
 
 # ######################################################################################################################
 """
-股票选择
+股票选择，股票卖出日期改为报告预计发布日
 """
+
 
 import os
 import pandas as pd
@@ -16,8 +17,8 @@ rq.init()
 
 # 参数
 hold_length = 5
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202001/数据/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202001/结果/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191209/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191209/结果/"
 if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')
@@ -49,17 +50,18 @@ estimate_infoPublDate.index = id_convert(estimate_infoPublDate.index.tolist())
 
 
 # 股票选择、买入及卖出时间
-quarterly_index = foreshow_cum_netProfitMin.columns[foreshow_cum_netProfitMin.columns >= "2019-12-31"].tolist()
+quarterly_index = foreshow_cum_netProfitMin.columns[foreshow_cum_netProfitMin.columns >= "2010-03-31"].tolist()
 df_code = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
 df_buy_date = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
 df_sell_date = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
 df_join = pd.DataFrame(columns=['code', 'buy_date', 'sell_date'])
 
 for quarterly_adjust in quarterly_index:
+    # quarterly_adjust = quarterly_index[27]
     ind = (foreshow_cum_netProfitMin.columns.tolist()).index(quarterly_adjust)
     quarterly_yoy = foreshow_cum_netProfitMin.columns[ind - 4]
 
-    # 计算相关净利润数据
+    # 计算相关净利润与营收数据
     list_netProfit_cum = foreshow_cum_netProfitMin[quarterly_adjust]
     list_netProfit_cum_yoy = realized_cum_netProfit[quarterly_yoy]
 
@@ -110,7 +112,7 @@ for quarterly_adjust in quarterly_index:
         else:
             df_infoPublDate.loc[code, 'buy_date'] = np.nan
 
-    # df_infoPublDate = df_infoPublDate.dropna(axis=0, how='any')
+    df_infoPublDate = df_infoPublDate.dropna(axis=0, how='any')
 
     df_code.iloc[:len(df_infoPublDate), quarterly_index.index(quarterly_adjust)] = df_infoPublDate.index
     df_buy_date.iloc[:len(df_infoPublDate), quarterly_index.index(quarterly_adjust)] = \
@@ -128,17 +130,17 @@ for quarterly_adjust in quarterly_index:
     print(quarterly_adjust)
 
 
-# df_join[(df_join['code'] == '000048.XSHE') &
-#         (df_join['buy_date'] < '2018-04-31') & (df_join['buy_date'] > '2018-01-01')] = np.nan
-# df_join.dropna(how='any', inplace=True)
+df_join[(df_join['code'] == '000048.XSHE') &
+        (df_join['buy_date'] < '2018-04-31') & (df_join['buy_date'] > '2018-01-01')] = np.nan
+df_join.dropna(how='any', inplace=True)
 df_join.drop_duplicates(inplace=True)
 df_join.reset_index(inplace=True, drop=True)
 
 
 # 数据导出
-# df_code.to_csv(outputPath + str(hold_length) + "_季度股票池.csv")
-# df_buy_date.to_csv(outputPath + str(hold_length) + "_季度个股买入时点.csv")
-# df_sell_date.to_csv(outputPath + str(hold_length) + "_季度个股卖出时点.csv")
-df_join.to_csv(outputPath + "汇总个股买卖时点.csv")
+df_code.to_csv(outputPath + str(hold_length) + "_季度股票池.csv")
+df_buy_date.to_csv(outputPath + str(hold_length) + "_季度个股买入时点.csv")
+df_sell_date.to_csv(outputPath + str(hold_length) + "_季度个股卖出时点.csv")
+df_join.to_csv(outputPath + str(hold_length) + "_汇总个股买卖时点.csv")
 
 # ######################################################################################################################

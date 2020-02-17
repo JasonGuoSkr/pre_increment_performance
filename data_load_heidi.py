@@ -18,13 +18,13 @@ g = QuantAPI()
 
 
 # 文件路径
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191003/数据/"
-start_date = "2009-01-01"
-end_date = "2019-06-30"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202001/数据/"
+start_date = "2017-01-01"
+end_date = "2019-12-31"
 
 # 取全A股票代码
 # date_now = datetime.now().strftime('%Y-%m-%d')
-date_now = '2019-09-30'
+date_now = '2020-01-13'
 
 indexComponent_wind = w.wset("sectorconstituent", "date=" + date_now + ";sectorid=a001010100000000")
 indexComponent_list = indexComponent_wind.Data[1]
@@ -46,7 +46,8 @@ for quarterlyDate in quarterlyDate_list:
 
     netProfit_df = pd.DataFrame(netProfit_dict).T
     netProfit_df.columns = [quarterlyDate]
-    netProfit_df[quarterlyDate] = [ind[0] for ind in netProfit_df[quarterlyDate]]
+    netProfit_df.index = indexComponent_list
+    # netProfit_df[quarterlyDate] = [ind[0] for ind in netProfit_df[quarterlyDate]]
     realized_cum_netProfit = realized_cum_netProfit.join(netProfit_df)
 
     print(quarterlyDate)

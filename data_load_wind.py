@@ -11,12 +11,12 @@ w.start()
 
 
 # 文件路径
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191021/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202001/数据/"
 start_date = "2017-01-01"
-end_date = "2019-09-30"
+end_date = "2019-12-31"
 
 # 取全A股票代码
-date_now = '2019-10-20'
+date_now = '2020-01-13'
 
 indexComponent_wind = w.wset("sectorconstituent", "date=" + date_now + ";sectorid=a001010100000000")
 indexComponent_list = indexComponent_wind.Data[1]

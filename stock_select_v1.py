@@ -4,6 +4,7 @@
 股票选择
 """
 
+
 import os
 import pandas as pd
 import numpy as np
@@ -16,8 +17,8 @@ rq.init()
 
 # 参数
 hold_length = 10
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191201/数据/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191201/结果/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191209/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191209/结果/"
 if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')
@@ -56,6 +57,7 @@ df_sell_date = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), col
 df_join = pd.DataFrame(columns=['code', 'buy_date', 'sell_date'])
 
 for quarterly_adjust in quarterly_index:
+    # quarterly_adjust = quarterly_index[30]
     ind = (foreshow_cum_netProfitMin.columns.tolist()).index(quarterly_adjust)
     quarterly_yoy = foreshow_cum_netProfitMin.columns[ind - 4]
 
@@ -127,9 +129,12 @@ for quarterly_adjust in quarterly_index:
 
     print(quarterly_adjust)
 
-df_join[(df_join['code'] == '000048.XSHE') & (df_join['sell_date'] == '2018-08-31')] = np.nan
+df_join[(df_join['code'] == '000048.XSHE') &
+        (df_join['buy_date'] < '2018-04-31') & (df_join['buy_date'] > '2018-01-01')] = np.nan
 df_join.dropna(how='any', inplace=True)
+df_join.drop_duplicates(inplace=True)
 df_join.reset_index(inplace=True, drop=True)
+
 
 # 数据导出
 df_code.to_csv(outputPath + str(hold_length) + "_季度股票池.csv")

@@ -16,9 +16,9 @@ rq.init()
 
 
 # 参数
-hold_length = 5
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191201/权重调整/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191201/权重调整/"
+hold_length = 10
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191209/权重不调整_100/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191209/权重不调整_100/"
 
 
 # 数据导入
@@ -46,10 +46,11 @@ unique_yearList = np.unique(np.array(yearList)).tolist()
 
 yearValue_df = pd.DataFrame(index=['avg'] + unique_yearList, columns=['absoluteAmount', 'baseAmount', 'capitalUse',
                                                                       "absoluteRate", "baseRate", "excessRate",
-                                                                      "maxDrawDown", "returnDraw", "dateLength"])
+                                                                      "dateLength", "returnValue", "maxDrawDown",
+                                                                      "returnDraw"])
 
 for yearStr in unique_yearList:
-    # yearStr = unique_yearList[0]
+    # yearStr = unique_yearList[-2]
 
     indexFirst = yearList.index(yearStr)
     indexNum = yearList.count(yearStr)
@@ -63,24 +64,36 @@ for yearStr in unique_yearList:
         (np.sum(ratio_df.iloc[indexFirst:indexFirst + indexNum, 2]) / indexNum)
     yearValue_df.loc[yearStr, "excessRate"] = yearValue_df.loc[yearStr, "absoluteRate"] - \
         yearValue_df.loc[yearStr, "baseRate"]
+    yearValue_df.loc[yearStr, "returnValue"] = equity_df.iloc[indexFirst + indexNum - 1, 0] / \
+        equity_df.iloc[indexFirst, 0] - 1
     yearValue_df.loc[yearStr, "maxDrawDown"] = max_drawdown(equity_df.iloc[indexFirst:indexFirst + indexNum, 0])
-    yearValue_df.loc[yearStr, "returnDraw"] = yearValue_df.loc[yearStr, "absoluteRate"] /\
+    yearValue_df.loc[yearStr, "returnDraw"] = yearValue_df.loc[yearStr, "returnValue"] /\
         yearValue_df.loc[yearStr, "maxDrawDown"]
     yearValue_df.loc[yearStr, "dateLength"] = np.sum(ratio_df.iloc[indexFirst:indexFirst + indexNum, 2] != 0)
 
 
-yearValue_df.loc["avg", "absoluteAmount"] = np.mean(yearValue_df.iloc[2:, 0])
-yearValue_df.loc["avg", "baseAmount"] = np.mean(yearValue_df.iloc[2:, 1])
-yearValue_df.loc["avg", "capitalUse"] = np.mean(yearValue_df.iloc[2:, 2])
-yearValue_df.loc["avg", "absoluteRate"] = np.mean(yearValue_df.iloc[2:, 3])
-yearValue_df.loc["avg", "baseRate"] = np.mean(yearValue_df.iloc[2:, 4])
-yearValue_df.loc["avg", "excessRate"] = np.mean(yearValue_df.iloc[2:, 5])
-yearValue_df.loc["avg", "maxDrawDown"] = np.mean(yearValue_df.iloc[2:, 6])
-yearValue_df.loc["avg", "returnDraw"] = np.mean(yearValue_df.iloc[2:, 7])
-yearValue_df.loc["avg", "dateLength"] = np.mean(yearValue_df.iloc[2:, 8])
+yearValue_df.loc["avg", "absoluteAmount"] = np.mean(yearValue_df.iloc[1:, 0])
+yearValue_df.loc["avg", "baseAmount"] = np.mean(yearValue_df.iloc[1:, 1])
+yearValue_df.loc["avg", "capitalUse"] = np.mean(yearValue_df.iloc[1:, 2])
+yearValue_df.loc["avg", "absoluteRate"] = np.mean(yearValue_df.iloc[1:, 3])
+yearValue_df.loc["avg", "baseRate"] = np.mean(yearValue_df.iloc[1:, 4])
+yearValue_df.loc["avg", "excessRate"] = np.mean(yearValue_df.iloc[1:, 5])
+yearValue_df.loc["avg", "dateLength"] = np.mean(yearValue_df.iloc[1:, 6])
+yearValue_df.loc["avg", "returnValue"] = np.mean(yearValue_df.iloc[1:, 7])
+yearValue_df.loc["avg", "maxDrawDown"] = max_drawdown(equity_df.iloc[:, 0])
+yearValue_df.loc["avg", "returnDraw"] = np.mean(yearValue_df.iloc[1:, 9])
+
+
+# 动态回撤分析
+excess_drawDown_df = -(np.maximum.accumulate(equity_df["daily_equity"]) - equity_df["daily_equity"]) \
+                     / np.maximum.accumulate(equity_df["daily_equity"])
+excess_drawDown_df = excess_drawDown_df.to_frame()
+excess_drawDown_df.columns = ["excessDrawDown"]
 
 
 # 数据导出
 yearValue_df.to_csv(outputPath + str(hold_length) + "_年度收益分析.csv")
+excessValue_df = equity_df.join(excess_drawDown_df)
+excessValue_df.to_csv(outputPath + str(hold_length) + "_策略净值曲线.csv")
 
 # ######################################################################################################################

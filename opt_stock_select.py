@@ -4,6 +4,7 @@
 股票选择
 """
 
+import os
 import pandas as pd
 import numpy as np
 import datetime
@@ -14,8 +15,11 @@ rq.init()
 
 
 # 参数
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191101/数据/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191101/持仓时间参数优化/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191203/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191203/利润增长率下限参数优化/结果/"
+if not os.path.exists(outputPath):
+    os.makedirs(outputPath)
+    print(outputPath + '创建成功')
 
 
 # 数据导入
@@ -44,10 +48,12 @@ estimate_infoPublDate.index = id_convert(estimate_infoPublDate.index.tolist())
 
 
 # 股票选择、买入及卖出时间
-# hold_length = 10
-for i in range(1,5):
+hold_length = 10
+for i in range(1,11):
     print(i)
-    hold_length = i*5
+    # hold_length = i*5
+    profit_down = 1e7
+    profit_rate = i*0.1
 
     quarterly_index = foreshow_cum_netProfitMin.columns[foreshow_cum_netProfitMin.columns >= "2010-06-30"].tolist()
     df_code = pd.DataFrame(index=range(foreshow_cum_netProfitMin.shape[0]), columns=quarterly_index)
@@ -58,8 +64,6 @@ for i in range(1,5):
     for quarterly_adjust in quarterly_index:
         ind = (foreshow_cum_netProfitMin.columns.tolist()).index(quarterly_adjust)
         quarterly_yoy = foreshow_cum_netProfitMin.columns[ind - 4]
-        # quarterly_pre = foreshow_cum_netProfitMin.columns[ind - 1]
-        # quarterly_preYoy = foreshow_cum_netProfitMin.columns[ind - 5]
 
         # 计算相关净利润与营收数据
         list_netProfit_cum = foreshow_cum_netProfitMin[quarterly_adjust]
@@ -70,27 +74,19 @@ for i in range(1,5):
 
         # 预告财报净利润同比增速大于50%且预告财报净利润大于1000万
         list_profitRate_cum = (list_netProfit_cum - list_netProfit_cum_yoy) / abs(list_netProfit_cum_yoy)
-        list_profitRate_cum_index = list_profitRate_cum > 0.5
+        list_profitRate_cum_index = list_profitRate_cum > profit_rate
 
-        list_netProfit_cum_index = list_netProfit_cum > 1e7
+        list_netProfit_cum_index = list_netProfit_cum > profit_down
 
         # 预告单季度净利润同比增速大于50%且预告单季度净利润大于1000万
         list_profitRate_quarterly = (list_netProfit_quarterly - list_netProfit_quarterly_yoy) \
-            / abs(list_netProfit_quarterly_yoy)
-        list_profitRate_quarterly_index = list_profitRate_quarterly > 0.5
+                                    / abs(list_netProfit_quarterly_yoy)
+        list_profitRate_quarterly_index = list_profitRate_quarterly > profit_rate
 
-        list_netProfit_quarterly_index = list_netProfit_quarterly > 1e7
+        list_netProfit_quarterly_index = list_netProfit_quarterly > profit_down
 
-        # df_profit = pd.DataFrame({'list_netProfit_cum': list_netProfit_cum,
-        #                           'list_netProfit_cum_yoy': list_netProfit_cum_yoy,
-        #                           'list_profitRate_cum': list_profitRate_cum,
-        #                           'list_netProfit_quarterly': list_netProfit_quarterly,
-        #                           'list_netProfit_quarterly_yoy': list_netProfit_quarterly_yoy,
-        #                           'list_profitRate_quarterly': list_profitRate_quarterly})
-        # df_profit.sort_values(by=['list_profitRate_cum'], ascending=False, inplace=True)
-
-        list_filter_index = list_profitRate_cum_index & list_netProfit_cum_index & list_profitRate_quarterly_index &\
-            list_netProfit_quarterly_index
+        list_filter_index = list_profitRate_cum_index & list_netProfit_cum_index & list_profitRate_quarterly_index & \
+                            list_netProfit_quarterly_index
 
         list_code_filter = list_filter_index.index[list_filter_index].tolist()
 
@@ -115,7 +111,8 @@ for i in range(1,5):
             pre_estimate_infoPublDate = get_previous_trading_date(
                 df_infoPublDate.loc[code, 'estimate_infoPublDate'], n=hold_length).strftime("%Y-%m-%d")
 
-            if max(ind_foreshow_infoPublDate, pre_estimate_infoPublDate) < df_infoPublDate.loc[code, 'realized_infoPublDate']:
+            if max(ind_foreshow_infoPublDate, pre_estimate_infoPublDate) < df_infoPublDate.loc[
+                code, 'realized_infoPublDate']:
                 df_infoPublDate.loc[code, 'buy_date'] = max(ind_foreshow_infoPublDate, pre_estimate_infoPublDate)
             else:
                 df_infoPublDate.loc[code, 'buy_date'] = np.nan

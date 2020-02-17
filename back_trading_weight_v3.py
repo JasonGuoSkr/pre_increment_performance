@@ -1,8 +1,8 @@
 
 # ######################################################################################################################
 """
-绩效回测V1:
-    根据真实持股数量计算组合及指数收益率，组合及指数买入权重一致，持股组合无变化时不调仓
+绩效回测V3:
+    根据真实持股数量计算组合及指数收益率，组合及指数买入权重一致，无股票买入时无变化时不调仓
     个股持仓上限为5%，每日调仓，使股票间等权重
 """
 
@@ -18,8 +18,8 @@ rq.init()
 
 
 # 参数
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191203/结果/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191203/权重调整/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191209/结果/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/结果20191209/权重调整/"
 if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')
@@ -135,9 +135,9 @@ for date in list_calendar[1:-1]:
         code_sell = df_buy_sell[df_buy_sell['sell_date'] == date]['code'].tolist()
 
         if len(holding_code) and len(holding_pre):
-            if holding_code == holding_pre:
+            if not code_buy:
                 volume_daily = volume_pre
-                index_volume_daily = index_volume_pre
+                volume_daily.loc[code_sell] = 0
             else:
                 weight_daily = pd.Series(data=np.zeros(len(list_code)), index=list_code)
 
@@ -150,10 +150,10 @@ for date in list_calendar[1:-1]:
                 volume_daily.fillna(0, inplace=True)
                 volume_daily = np.floor(volume_daily / 100) * 100
 
-                # index_volume_daily = index_equity_pre * np.sum(weight_daily) / price_index.loc[date_date_pre, 'close']
-                index_volume_daily = np.nansum(volume_daily * df_open.loc[date_date]) / \
-                    price_index.loc[date_date_pre, 'close']
-                index_volume_daily = np.floor(index_volume_daily / index_multiplier)
+            # index_volume_daily = index_equity_pre * np.sum(weight_daily) / price_index.loc[date_date_pre, 'close']
+            index_volume_daily = np.nansum(volume_daily * df_open.loc[date_date]) / \
+                price_index.loc[date_date_pre, 'close']
+            index_volume_daily = np.floor(index_volume_daily / index_multiplier)
 
             # 股票组合计算
             volume_diff = volume_daily - volume_pre
