@@ -11,12 +11,12 @@ import datetime
 import rqdatac as rq
 from rqdatac import *
 
-rq.init()
+rq.init("ricequant", "8ricequant8", ('10.29.135.119', 16010))
 
 
 # 参数
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202001/数据/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202001/数据/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202002/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202002/数据/"
 
 
 # 数据导入

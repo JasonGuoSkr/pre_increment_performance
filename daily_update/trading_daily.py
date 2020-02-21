@@ -11,7 +11,7 @@ import rqdatac as rq
 from rqdatac import *
 from QuantAPIDefine import QuantAPI
 
-rq.init()
+rq.init("ricequant", "8ricequant8", ('10.29.135.119', 16010))
 g = QuantAPI()
 
 
@@ -26,13 +26,13 @@ def id_wind(code_list):
 
 
 # 参数
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整/结果/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整/结果/"
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202002/结果_5/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202002/结果_5/"
 
 # 数据导入
 df_code = pd.read_csv(inputPath + "汇总个股买卖时点.csv", index_col=0, engine='python')
 
-start_date = "2019-09-01"
+start_date = "2020-01-01"
 end_date = datetime.datetime.now().strftime('%Y-%m-%d')
 
 # 交易日列表

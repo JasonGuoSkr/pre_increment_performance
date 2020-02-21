@@ -11,13 +11,13 @@ import datetime
 import rqdatac as rq
 from rqdatac import *
 
-rq.init()
+rq.init("ricequant", "8ricequant8", ('10.29.135.119', 16010))
 
 
 # 参数
-hold_length = 5
-inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202001/数据/"
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202001/结果/"
+hold_length = 10
+inputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202002/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202002/结果_10/"
 if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')

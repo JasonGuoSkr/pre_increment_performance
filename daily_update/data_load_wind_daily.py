@@ -13,13 +13,13 @@ w.start()
 
 
 # 文件路径
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202002/数据/"
 if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')
 
-start_date = "2019-09-30"
-end_date = "2019-09-30"
+start_date = "2019-12-31"
+end_date = "2019-12-31"
 
 # 历史数据导入
 foreshow_infoPublDate = pd.read_csv(outputPath + "业绩预告最新披露日期_wind.csv", index_col=0, engine='python')

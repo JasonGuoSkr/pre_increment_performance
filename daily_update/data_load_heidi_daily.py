@@ -18,13 +18,13 @@ g = QuantAPI()
 
 
 # 文件路径
-outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整/数据/"
+outputPath = "E:/中泰证券/策略/潜伏业绩预增策略/每日跟踪调整202002/数据/"
 if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')
 
-start_date = "2017-03-31"
-end_date = "2019-09-30"
+start_date = "2017-01-01"
+end_date = "2019-12-31"
 
 # 取全A股票代码
 date_now = datetime.now().strftime('%Y-%m-%d')
