@@ -65,7 +65,6 @@ df_close = price_df.close.loc[:, list_code]
 price_index = rq.get_price(index_code, start_date=start_date, end_date=end_date, frequency='1d',
                            fields=['open', 'close'], adjust_type='pre', skip_suspended=False, market='cn')
 
-
 # 日收益计算
 holding_pre = []
 equity_pre = 0
@@ -108,7 +107,7 @@ for date in list_calendar[1:-1]:
                 volume_daily = np.floor(volume_daily / 100) * 100
 
             # index_volume_daily = index_equity_pre * np.sum(weight_daily) / price_index.loc[date_date_pre, 'close']
-            index_volume_daily = np.nansum(volume_daily * df_open.loc[date_date]) / \
+            index_volume_daily = np.nansum(volume_daily * df_close.loc[date_date_pre]) / \
                 price_index.loc[date_date_pre, 'close']
             index_volume_daily = np.floor(index_volume_daily / index_multiplier)
 
@@ -117,13 +116,13 @@ for date in list_calendar[1:-1]:
 
             volume_buy = volume_diff.copy()
             volume_buy[volume_buy < 0] = 0
-            cost_buy = np.nansum(volume_buy * df_open.loc[date_date] * tran_cost)
+            cost_buy = np.nansum(volume_buy * df_close.loc[date_date_pre] * tran_cost)
 
             volume_sell = volume_diff.copy()
             volume_sell[volume_sell > 0] = 0
-            cost_sell = - np.nansum(volume_sell * df_open.loc[date_date] * (tran_cost + tax_cost))
+            cost_sell = - np.nansum(volume_sell * df_close.loc[date_date_pre] * (tran_cost + tax_cost))
 
-            daily_profit = np.nansum(volume_daily * (df_open.loc[date_date_post] - df_open.loc[date_date])) - \
+            daily_profit = np.nansum(volume_daily * (df_close.loc[date_date] - df_close.loc[date_date_pre])) - \
                 cost_buy - cost_sell
             daily_ratio = daily_profit / equity_pre
             daily_use = initial_amount
@@ -132,9 +131,9 @@ for date in list_calendar[1:-1]:
             # 指数计算
             index_volume_diff = index_volume_daily - index_volume_pre
 
-            index_cost = abs(index_volume_diff) * index_multiplier * price_index.loc[date_date, 'open'] * tran_cost
+            index_cost = abs(index_volume_diff) * index_multiplier * price_index.loc[date_date_pre, 'close'] * tran_cost
             index_daily_profit = index_volume_daily * \
-                index_multiplier * (price_index.loc[date_date_post, 'open'] - price_index.loc[date_date, 'open']) - \
+                index_multiplier * (price_index.loc[date_date, 'close'] - price_index.loc[date_date_pre, 'close']) - \
                 index_cost
             index_daily_ratio = index_daily_profit / index_equity_pre
             index_equity_pre = index_equity_pre + index_daily_profit
@@ -157,9 +156,9 @@ for date in list_calendar[1:-1]:
 
             volume_buy = volume_diff.copy()
             volume_buy[volume_buy < 0] = 0
-            cost_buy = np.nansum(volume_buy * df_open.loc[date_date] * tran_cost)
+            cost_buy = np.nansum(volume_buy * df_close.loc[date_date_pre] * tran_cost)
 
-            daily_profit = np.nansum(volume_daily * (df_open.loc[date_date_post] - df_open.loc[date_date])) - cost_buy
+            daily_profit = np.nansum(volume_daily * (df_close.loc[date_date] - df_open.loc[date_date_pre])) - cost_buy
             daily_ratio = daily_profit / equity_pre
             daily_use = initial_amount
             equity_pre = equity_pre + daily_profit
@@ -170,9 +169,9 @@ for date in list_calendar[1:-1]:
             index_volume_daily = np.floor(index_volume_daily / index_multiplier)
             index_volume_diff = index_volume_daily - index_volume_pre
 
-            index_cost = abs(index_volume_diff) * index_multiplier * price_index.loc[date_date, 'open'] * tran_cost
+            index_cost = abs(index_volume_diff) * index_multiplier * price_index.loc[date_date_pre, 'close'] * tran_cost
             index_daily_profit = index_volume_daily * \
-                index_multiplier * (price_index.loc[date_date_post, 'open'] - price_index.loc[date_date, 'open']) - \
+                index_multiplier * (price_index.loc[date_date, 'close'] - price_index.loc[date_date_pre, 'close']) - \
                 index_cost
             index_daily_ratio = index_daily_profit / index_equity_pre
             index_equity_pre = index_equity_pre + index_daily_profit
@@ -184,9 +183,9 @@ for date in list_calendar[1:-1]:
 
             volume_sell = volume_diff.copy()
             volume_sell[volume_sell > 0] = 0
-            cost_sell = - np.nansum(volume_sell * df_open.loc[date_date] * (tran_cost + tax_cost))
+            cost_sell = - np.nansum(volume_sell * df_close.loc[date_date_pre] * (tran_cost + tax_cost))
 
-            daily_profit = np.nansum(volume_daily * (df_open.loc[date_date_post] - df_open.loc[date_date])) - cost_sell
+            daily_profit = np.nansum(volume_daily * (df_close.loc[date_date] - df_close.loc[date_date_pre])) - cost_sell
             daily_ratio = daily_profit / equity_pre
             daily_use = initial_amount
             equity_pre = 0
@@ -195,9 +194,9 @@ for date in list_calendar[1:-1]:
             index_volume_daily = 0
             index_volume_diff = index_volume_daily - index_volume_pre
 
-            index_cost = abs(index_volume_diff) * index_multiplier * price_index.loc[date_date, 'open'] * tran_cost
+            index_cost = abs(index_volume_diff) * index_multiplier * price_index.loc[date_date_pre, 'close'] * tran_cost
             index_daily_profit = index_volume_daily * \
-                index_multiplier * (price_index.loc[date_date_post, 'open'] - price_index.loc[date_date, 'open']) - \
+                index_multiplier * (price_index.loc[date_date, 'close'] - price_index.loc[date_date_pre, 'close']) - \
                 index_cost
             index_daily_ratio = index_daily_profit / index_equity_pre
             index_equity_pre = 0
