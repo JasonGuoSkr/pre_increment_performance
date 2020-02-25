@@ -77,7 +77,7 @@ ratio_df = pd.DataFrame(index=list_calendar, columns=['daily_profit', 'capital_u
                                                       'buy_num', 'sell_num', 'index_num'])
 
 for date in list_calendar:
-    # date = list_calendar[189]
+    # date = list_calendar[36]
     date_pre = list_calendar[list_calendar.index(date) - 1]
     date_date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
 
@@ -86,8 +86,38 @@ for date in list_calendar:
 
         holding_code = df_buy_sell[(df_buy_sell['buy_date'] <= date) &
                                    (df_buy_sell['sell_date'] > date)]['code'].tolist()
+
         code_buy = df_buy_sell[df_buy_sell['buy_date'] == date]['code'].tolist()
         code_sell = df_buy_sell[df_buy_sell['sell_date'] == date]['code'].tolist()
+
+        if len(code_buy):
+            # 剔除ST、停牌及涨跌停股票
+            list_st_index = is_st_stock(code_buy, date_date_pre, date_date_pre).T
+
+            list_suspended_index = pd.DataFrame(index=code_buy)
+            for codes in code_buy:
+                try:
+                    suspended_index = is_suspended(codes, start_date=date_date_pre, end_date=date_date_pre)
+                except ValueError:
+                    list_suspended_index.loc[codes, date_date_pre] = True
+                else:
+                    if suspended_index is not None:
+                        list_suspended_index.loc[codes, date_date_pre] = suspended_index.loc[date_date_pre, codes]
+                    else:
+                        list_suspended_index.loc[codes, date_date_pre] = True
+
+            list_price = get_price(code_buy, start_date=date_date_pre, end_date=date_date_pre, frequency='1d',
+                                   fields=['open', 'limit_up', 'limit_down'])
+            list_open = list_price['open'].T
+            list_up = list_price['limit_up'].T
+            list_down = list_price['limit_down'].T
+
+            list_maxupordown_index = (list_open == list_up) | (list_open == list_down)
+            list_maxupordown_index.columns = list_suspended_index.columns
+
+            list_st_index.columns = list_suspended_index.columns
+            list_final_index = list_st_index + list_suspended_index + list_maxupordown_index
+            code_buy = list_final_index[list_final_index.values == False].index.tolist()
 
         if len(holding_code) and len(holding_pre):
             if not code_buy:
@@ -183,6 +213,9 @@ for date in list_calendar:
             volume_daily = pd.Series(data=np.zeros(len(list_code)), index=list_code)
             volume_diff = volume_daily - volume_pre
 
+            volume_buy = pd.Series(data=np.zeros(len(list_code)), index=list_code)
+            volume_sell = pd.Series(data=np.zeros(len(list_code)), index=list_code)
+
             daily_profit = 0
             daily_ratio = 0
             daily_use = 0
@@ -197,6 +230,9 @@ for date in list_calendar:
         volume_daily = volume_pre.copy()
         volume_diff = volume_daily - volume_pre
 
+        volume_buy = pd.Series(data=np.zeros(len(list_code)), index=list_code)
+        volume_sell = pd.Series(data=np.zeros(len(list_code)), index=list_code)
+
         daily_profit = 0
         daily_ratio = 0
         if holding_code:
@@ -207,21 +243,29 @@ for date in list_calendar:
         # 指数计算
         index_volume_daily = index_volume_pre
 
+    df_trading = pd.DataFrame({'num': volume_diff})
+    df_trading = df_trading[df_trading['num'] != 0]
+
+    if not df_trading.empty:
+        # pass
+        df_trading.loc['IF'] = index_volume_pre - index_volume_daily
+        df_trading.to_csv(outputPath + date + "_交易明细.csv")
+
     holding_pre = holding_code.copy()
     volume_pre = volume_daily.copy()
     index_volume_pre = index_volume_daily
 
     # 指标计算
-    ratio_df.loc[date, 'daily_profit'] = daily_profit
-    ratio_df.loc[date, 'capital_use'] = daily_use
-    ratio_df.loc[date, 'daily_ratio'] = daily_ratio
-    ratio_df.loc[date, 'holding_num'] = (volume_daily != 0).sum()
-    ratio_df.loc[date, 'buy_num'] = (volume_diff > 0).sum()
-    ratio_df.loc[date, 'sell_num'] = (volume_diff < 0).sum()
-    ratio_df.loc[date, 'index_num'] = index_volume_daily
+    # ratio_df.loc[date, 'daily_profit'] = daily_profit
+    # ratio_df.loc[date, 'capital_use'] = daily_use
+    # ratio_df.loc[date, 'daily_ratio'] = daily_ratio
+    # ratio_df.loc[date, 'holding_num'] = (volume_daily != 0).sum()
+    # ratio_df.loc[date, 'buy_num'] = (volume_diff > 0).sum()
+    # ratio_df.loc[date, 'sell_num'] = (volume_diff < 0).sum()
+    # ratio_df.loc[date, 'index_num'] = index_volume_daily
 
 
 # 数据导出
-ratio_df.to_csv(outputPath + str(hold_length) + "_策略收益率换手率.csv")
+# ratio_df.to_csv(outputPath + str(hold_length) + "_策略收益率换手率.csv")
 
 # ######################################################################################################################
