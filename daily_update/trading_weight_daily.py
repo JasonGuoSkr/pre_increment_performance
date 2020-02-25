@@ -255,6 +255,7 @@ for date in list_calendar:
     volume_pre = volume_daily.copy()
     index_volume_pre = index_volume_daily
 
+
     # 指标计算
     # ratio_df.loc[date, 'daily_profit'] = daily_profit
     # ratio_df.loc[date, 'capital_use'] = daily_use
