@@ -66,15 +66,14 @@ df_close = price_df.close.loc[:, list_code]
 price_index = rq.get_price(index_code, start_date=start_date, end_date=end_date, frequency='1d',
                            fields=['open', 'close'], adjust_type='pre', skip_suspended=False, market='cn')
 
+
 # 日收益计算
 holding_pre = []
 equity_pre = 0
-index_equity_pre = 0
 volume_pre = pd.Series(data=np.zeros(len(list_code)), index=list_code)
 index_volume_pre = 0
 
-ratio_df = pd.DataFrame(index=list_calendar, columns=['daily_profit', 'index_profit', 'capital_use',
-                                                      'daily_ratio', 'index_ratio', 'holding_num',
+ratio_df = pd.DataFrame(index=list_calendar, columns=['daily_profit', 'capital_use', 'daily_ratio', 'holding_num',
                                                       'buy_num', 'sell_num', 'index_num'])
 
 for date in list_calendar:
@@ -148,7 +147,7 @@ for date in list_calendar:
             volume_buy[volume_buy < 0] = 0
             cost_buy = np.nansum(volume_buy * df_close.loc[date_date_pre] * tran_cost)
 
-            daily_profit = np.nansum(volume_daily * (df_close.loc[date_date] - df_open.loc[date_date_pre])) - cost_buy
+            daily_profit = np.nansum(volume_daily * (df_close.loc[date_date] - df_close.loc[date_date_pre])) - cost_buy
             daily_ratio = daily_profit / equity_pre
             daily_use = initial_amount
             equity_pre = equity_pre + daily_profit
@@ -203,8 +202,6 @@ for date in list_calendar:
 
         # 指数计算
         index_volume_daily = index_volume_pre
-        index_daily_profit = 0
-        index_daily_ratio = 0
 
     holding_pre = holding_code.copy()
     volume_pre = volume_daily.copy()
@@ -220,22 +217,7 @@ for date in list_calendar:
     ratio_df.loc[date, 'index_num'] = index_volume_daily
 
 
-# 权益计算
-equity_df = pd.DataFrame(index=list_calendar[1:-1], columns=['daily_equity', 'index_equity', 'excess_equity',
-                                                             'cum_profit', 'index_cum_profit', 'excess_profit'])
-
-equity_df.loc[:, 'cum_profit'] = ratio_df.loc[:, 'daily_profit'].cumsum()
-equity_df.loc[:, 'index_cum_profit'] = ratio_df.loc[:, 'index_profit'].cumsum()
-equity_df.loc[:, 'excess_profit'] = (ratio_df.loc[:, 'daily_profit'] - ratio_df.loc[:, 'index_profit']).cumsum()
-# equity_df.loc[:, 'daily_equity'] = equity_df.loc[:, 'cum_profit'] / initial_amount + 1
-# equity_df.loc[:, 'index_equity'] = equity_df.loc[:, 'index_cum_profit'] / initial_amount + 1
-equity_df.loc[:, 'daily_equity'] = (ratio_df.loc[:, 'daily_ratio'] + 1).cumprod()
-equity_df.loc[:, 'index_equity'] = (ratio_df.loc[:, 'index_ratio'] + 1).cumprod()
-equity_df.loc[:, 'excess_equity'] = (ratio_df.loc[:, 'daily_ratio'] - ratio_df.loc[:, 'index_ratio'] + 1).cumprod()
-
-
 # 数据导出
 ratio_df.to_csv(outputPath + str(hold_length) + "_策略收益率换手率.csv")
-equity_df.to_csv(outputPath + str(hold_length) + "_策略动态权益.csv")
 
 # ######################################################################################################################
