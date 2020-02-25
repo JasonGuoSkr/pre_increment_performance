@@ -147,6 +147,8 @@ for date in list_calendar:
             volume_buy[volume_buy < 0] = 0
             cost_buy = np.nansum(volume_buy * df_close.loc[date_date_pre] * tran_cost)
 
+            volume_sell = pd.Series(data=np.zeros(len(list_code)), index=list_code)
+
             daily_profit = np.nansum(volume_daily * (df_close.loc[date_date] - df_close.loc[date_date_pre])) - cost_buy
             daily_ratio = daily_profit / equity_pre
             daily_use = initial_amount
@@ -161,6 +163,8 @@ for date in list_calendar:
             # 股票组合计算
             volume_daily = pd.Series(data=np.zeros(len(list_code)), index=list_code)
             volume_diff = volume_daily - volume_pre
+
+            volume_buy = pd.Series(data=np.zeros(len(list_code)), index=list_code)
 
             volume_sell = volume_diff.copy()
             volume_sell[volume_sell > 0] = 0
