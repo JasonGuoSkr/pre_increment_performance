@@ -60,7 +60,6 @@ list_code.sort()
 # 取行情数据
 price_df = rq.get_price(list_code, start_date=start_date, end_date=end_date, frequency='1d',
                         fields=['open', 'close'], adjust_type='pre', skip_suspended=False, market='cn')
-df_open = price_df.open.loc[:, list_code]
 df_close = price_df.close.loc[:, list_code]
 price_index = rq.get_price(index_code, start_date=start_date, end_date=end_date, frequency='1d',
                            fields=['open', 'close'], adjust_type='pre', skip_suspended=False, market='cn')
