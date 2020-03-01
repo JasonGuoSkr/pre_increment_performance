@@ -22,6 +22,7 @@ if not os.path.exists(outputPath):
     os.makedirs(outputPath)
     print(outputPath + '创建成功')
 
+up_date = datetime.datetime.now().strftime('%Y-%m-%d')
 
 # 数据导入
 foreshow_cum_netProfitMin = pd.read_csv(inputPath + "业绩预告累计净利润下限_计算.csv", index_col=0, engine='python')
@@ -139,6 +140,6 @@ df_join.reset_index(inplace=True, drop=True)
 # df_code.to_csv(outputPath + str(hold_length) + "_季度股票池.csv")
 # df_buy_date.to_csv(outputPath + str(hold_length) + "_季度个股买入时点.csv")
 # df_sell_date.to_csv(outputPath + str(hold_length) + "_季度个股卖出时点.csv")
-df_join.to_csv(outputPath + "汇总个股买卖时点.csv")
+df_join.to_csv(outputPath + "汇总个股买卖时点_" + up_date + ".csv")
 
 # ######################################################################################################################
