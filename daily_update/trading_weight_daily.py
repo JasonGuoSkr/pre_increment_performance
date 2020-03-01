@@ -87,15 +87,12 @@ for date in list_calendar:
         holding_code = df_buy_sell[(df_buy_sell['buy_date'] <= date) &
                                    (df_buy_sell['sell_date'] > date)]['code'].tolist()
 
-        code_buy = df_buy_sell[df_buy_sell['buy_date'] == date]['code'].tolist()
-        code_sell = df_buy_sell[df_buy_sell['sell_date'] == date]['code'].tolist()
-
-        if len(code_buy):
+        if len(holding_code):
             # 剔除ST、停牌及涨跌停股票
-            list_st_index = is_st_stock(code_buy, date_date_pre, date_date_pre).T
+            list_st_index = is_st_stock(holding_code, date_date_pre, date_date_pre).T
 
-            list_suspended_index = pd.DataFrame(index=code_buy)
-            for codes in code_buy:
+            list_suspended_index = pd.DataFrame(index=holding_code)
+            for codes in holding_code:
                 try:
                     suspended_index = is_suspended(codes, start_date=date_date_pre, end_date=date_date_pre)
                 except ValueError:
@@ -106,7 +103,7 @@ for date in list_calendar:
                     else:
                         list_suspended_index.loc[codes, date_date_pre] = True
 
-            list_price = get_price(code_buy, start_date=date_date_pre, end_date=date_date_pre, frequency='1d',
+            list_price = get_price(holding_code, start_date=date_date_pre, end_date=date_date_pre, frequency='1d',
                                    fields=['open', 'limit_up', 'limit_down'])
             list_open = list_price['open'].T
             list_up = list_price['limit_up'].T
@@ -117,7 +114,10 @@ for date in list_calendar:
 
             list_st_index.columns = list_suspended_index.columns
             list_final_index = list_st_index + list_suspended_index + list_maxupordown_index
-            code_buy = list_final_index[list_final_index.values == False].index.tolist()
+            holding_code = list_final_index[list_final_index.values == False].index.tolist()
+
+        code_buy = df_buy_sell[df_buy_sell['buy_date'] == date]['code'].tolist()
+        code_sell = df_buy_sell[df_buy_sell['sell_date'] == date]['code'].tolist()
 
         if len(holding_code) and len(holding_pre):
             if not code_buy:
