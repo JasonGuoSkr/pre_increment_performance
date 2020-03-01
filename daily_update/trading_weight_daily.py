@@ -77,7 +77,7 @@ ratio_df = pd.DataFrame(index=list_calendar, columns=['daily_profit', 'capital_u
                                                       'buy_num', 'sell_num', 'index_num'])
 
 for date in list_calendar:
-    # date = list_calendar[36]
+    # date = list_calendar[50]
     date_pre = list_calendar[list_calendar.index(date) - 1]
     date_date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
 
@@ -127,7 +127,7 @@ for date in list_calendar:
 
         if len(holding_code) and len(holding_pre):
             if not code_buy:
-                volume_daily = volume_pre
+                volume_daily = volume_pre.copy()
                 volume_daily.loc[code_sell] = 0
             else:
                 weight_daily = pd.Series(data=np.zeros(len(list_code)), index=list_code)
